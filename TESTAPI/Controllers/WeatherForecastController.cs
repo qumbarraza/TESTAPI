@@ -27,7 +27,7 @@ namespace TESTAPI.Controllers
         public IActionResult GetName()
         {
             var name = new TestName();
-            name.Name = "TESTAPI";
+            name.Name = "TESTAPI - DEV";
             return Ok(name);
         }
     }
