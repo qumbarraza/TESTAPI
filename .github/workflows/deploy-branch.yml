@@ -10,6 +10,12 @@ on:
         options:
           - dev
           - test
+      testlib_sha:
+        description: 'TESTLIB commit SHA (leave blank for default)'
+        required: false
+
+env:
+  TESTLIB_SHA: 45b5954b0c4a6c7b8dbe80edaac99804b9c7d778
 
 jobs:
   build-and-deploy:
@@ -18,9 +24,17 @@ jobs:
     environment: ${{ inputs.environment }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
+
+      - name: Checkout TESTLIB
+        uses: actions/checkout@v4
+        with:
+          repository: qumbarraza/TESTLIB
+          ref: ${{ inputs.testlib_sha || env.TESTLIB_SHA }}
+          path: TESTLIB
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -37,8 +51,8 @@ jobs:
 
       - name: Restore & Publish
         run: |
-          dotnet restore TESTAPI/TESTAPI.csproj
-          dotnet publish TESTAPI/TESTAPI.csproj `
+          dotnet restore TESTAPI/TESTAPI/TESTAPI.csproj
+          dotnet publish TESTAPI/TESTAPI/TESTAPI.csproj `
             -c Release `
             -r win-x64 `
             --self-contained false `
@@ -53,7 +67,7 @@ jobs:
 
       - name: Deploy to IIS (${{ inputs.environment }})
         run: |
-          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+          powershell -ExecutionPolicy Bypass -File TESTAPI/TESTAPI/deploy/iis-deploy.ps1 `
             -Environment "${{ inputs.environment }}" `
             -ArtifactPath "${{ github.workspace }}\publish" `
             -Version "${{ steps.version.outputs.version }}"

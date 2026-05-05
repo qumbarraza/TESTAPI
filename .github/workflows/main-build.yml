@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  TESTLIB_SHA: 45b5954b0c4a6c7b8dbe80edaac99804b9c7d778
+
 jobs:
   build-and-release:
     name: build & release
@@ -14,9 +17,17 @@ jobs:
       artifact-name: ${{ steps.version.outputs.artifact-name }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
+
+      - name: Checkout TESTLIB @ ${{ env.TESTLIB_SHA }}
+        uses: actions/checkout@v4
+        with:
+          repository: qumbarraza/TESTLIB
+          ref: ${{ env.TESTLIB_SHA }}
+          path: TESTLIB
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -32,11 +43,11 @@ jobs:
           echo "artifact-name=$artifactName" >> $env:GITHUB_OUTPUT
 
       - name: Restore
-        run: dotnet restore TESTAPI/TESTAPI.csproj
+        run: dotnet restore TESTAPI/TESTAPI/TESTAPI.csproj
 
       - name: Publish
         run: |
-          dotnet publish TESTAPI/TESTAPI.csproj `
+          dotnet publish TESTAPI/TESTAPI/TESTAPI.csproj `
             -c Release `
             -r win-x64 `
             --self-contained false `
@@ -61,8 +72,8 @@ jobs:
           release_name: Release ${{ steps.version.outputs.version }}
           body: |
             Artifact: `${{ steps.version.outputs.artifact-name }}`
-            Commit: ${{ github.sha }}
-            Built from: `main`
+            TESTAPI commit: ${{ github.sha }}
+            TESTLIB commit: ${{ env.TESTLIB_SHA }}
           draft: false
           prerelease: false
 
@@ -73,9 +84,10 @@ jobs:
     environment: dev
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -88,7 +100,7 @@ jobs:
 
       - name: Deploy to IIS (dev)
         run: |
-          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+          powershell -ExecutionPolicy Bypass -File TESTAPI/TESTAPI/deploy/iis-deploy.ps1 `
             -Environment dev `
             -ArtifactPath "${{ github.workspace }}\artifact\publish" `
             -Version "${{ needs.build-and-release.outputs.version }}"
@@ -100,9 +112,10 @@ jobs:
     environment: test
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -115,7 +128,7 @@ jobs:
 
       - name: Deploy to IIS (test)
         run: |
-          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+          powershell -ExecutionPolicy Bypass -File TESTAPI/TESTAPI/deploy/iis-deploy.ps1 `
             -Environment test `
             -ArtifactPath "${{ github.workspace }}\artifact\publish" `
             -Version "${{ needs.build-and-release.outputs.version }}"
@@ -127,9 +140,10 @@ jobs:
     environment: stage
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -142,7 +156,7 @@ jobs:
 
       - name: Deploy to IIS (stage)
         run: |
-          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+          powershell -ExecutionPolicy Bypass -File TESTAPI/TESTAPI/deploy/iis-deploy.ps1 `
             -Environment stage `
             -ArtifactPath "${{ github.workspace }}\artifact\publish" `
             -Version "${{ needs.build-and-release.outputs.version }}"
@@ -154,9 +168,10 @@ jobs:
     environment: prod
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
 
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -169,7 +184,7 @@ jobs:
 
       - name: Deploy to IIS (prod)
         run: |
-          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+          powershell -ExecutionPolicy Bypass -File TESTAPI/TESTAPI/deploy/iis-deploy.ps1 `
             -Environment prod `
             -ArtifactPath "${{ github.workspace }}\artifact\publish" `
             -Version "${{ needs.build-and-release.outputs.version }}"

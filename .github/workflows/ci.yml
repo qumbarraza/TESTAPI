@@ -10,15 +10,26 @@ on:
     branches:
       - main
 
+env:
+  TESTLIB_SHA: 45b5954b0c4a6c7b8dbe80edaac99804b9c7d778
+
 jobs:
   build:
     name: build
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout TESTAPI
+        uses: actions/checkout@v4
         with:
-          submodules: recursive
+          path: TESTAPI
+
+      - name: Checkout TESTLIB @ ${{ env.TESTLIB_SHA }}
+        uses: actions/checkout@v4
+        with:
+          repository: qumbarraza/TESTLIB
+          ref: ${{ env.TESTLIB_SHA }}
+          path: TESTLIB
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -26,18 +37,17 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Restore
-        run: dotnet restore TESTAPI/TESTAPI.csproj
+        run: dotnet restore TESTAPI/TESTAPI/TESTAPI.csproj
 
       - name: Build
-        run: dotnet build TESTAPI/TESTAPI.csproj -c Release --no-restore
+        run: dotnet build TESTAPI/TESTAPI/TESTAPI.csproj -c Release --no-restore
 
       - name: Test
-        run: dotnet test TESTAPI/TESTAPI.csproj --no-build -c Release --verbosity normal
+        run: dotnet test TESTAPI/TESTAPI/TESTAPI.csproj --no-build -c Release --verbosity normal
 
       - name: Upload branch artifact
         uses: actions/upload-artifact@v4
         with:
           name: testapi-branch-${{ github.run_number }}-${{ github.sha }}
-          path: |
-            TESTAPI/bin/Release/
+          path: TESTAPI/TESTAPI/bin/Release/
           retention-days: 3

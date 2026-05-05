@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TESTLIB\TESTLIB\TESTLIB.csproj" />
+    <ProjectReference Include="..\..\TESTLIB\TESTLIB\TESTLIB.csproj" />
   </ItemGroup>
 
 </Project>
