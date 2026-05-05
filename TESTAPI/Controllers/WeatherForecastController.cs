@@ -28,6 +28,7 @@ namespace TESTAPI.Controllers
         {
             var name = new TestName();
             name.Name = "TESTAPI - DEV - TEST";
+            name.Age = 5;
             return Ok(name);
         }
     }
