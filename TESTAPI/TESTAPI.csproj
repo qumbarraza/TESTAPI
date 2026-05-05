@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="TESTLIB" Version="1.0.*" />
+    <ProjectReference Include="..\TESTLIB\TESTLIB\TESTLIB.csproj" />
   </ItemGroup>
 
 </Project>
