@@ -1,0 +1,137 @@
+name: main-build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-release:
+    name: build & release
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      artifact-name: ${{ steps.version.outputs.artifact-name }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Set version
+        id: version
+        run: |
+          $version = "1.0.${{ github.run_number }}"
+          $artifactName = "testapi-$version"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "artifact-name=$artifactName" >> $env:GITHUB_OUTPUT
+
+      - name: Restore
+        run: dotnet restore TESTAPI/TESTAPI.csproj
+
+      - name: Publish
+        run: |
+          dotnet publish TESTAPI/TESTAPI.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained false `
+            -o publish/
+
+      - name: Zip artifact
+        run: Compress-Archive -Path publish/* -DestinationPath testapi-${{ steps.version.outputs.version }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.version.outputs.artifact-name }}
+          path: testapi-${{ steps.version.outputs.version }}.zip
+          retention-days: 30
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: Release ${{ steps.version.outputs.version }}
+          body: |
+            Artifact: `${{ steps.version.outputs.artifact-name }}`
+            Commit: ${{ github.sha }}
+            Built from: `main`
+          draft: false
+          prerelease: false
+
+  deploy-dev:
+    name: deploy → dev
+    needs: build-and-release
+    runs-on: windows-latest
+    environment: dev
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-and-release.outputs.artifact-name }}
+
+      - name: Deploy to Dev
+        run: |
+          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
+          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Dev"
+          echo "Replace this step with your actual deploy command (xcopy / robocopy / IIS appcmd)"
+
+  deploy-test:
+    name: deploy → test
+    needs: build-and-release
+    runs-on: windows-latest
+    environment: test
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-and-release.outputs.artifact-name }}
+
+      - name: Deploy to Test
+        run: |
+          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
+          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Test"
+          echo "Replace this step with your actual deploy command"
+
+  deploy-stage:
+    name: deploy → stage
+    needs: [build-and-release, deploy-dev, deploy-test]
+    runs-on: windows-latest
+    environment: stage
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-and-release.outputs.artifact-name }}
+
+      - name: Deploy to Stage
+        run: |
+          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
+          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Stage"
+          echo "Replace this step with your actual deploy command"
+
+  deploy-prod:
+    name: deploy → prod
+    needs: [build-and-release, deploy-stage]
+    runs-on: windows-latest
+    environment: prod
+
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build-and-release.outputs.artifact-name }}
+
+      - name: Deploy to Prod
+        run: |
+          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
+          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Prod (Live)"
+          echo "Replace this step with your actual deploy command"
