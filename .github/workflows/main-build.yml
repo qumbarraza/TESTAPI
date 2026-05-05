@@ -67,71 +67,99 @@ jobs:
   deploy-dev:
     name: deploy → dev
     needs: build-and-release
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, iis]
     environment: dev
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-and-release.outputs.artifact-name }}
+          path: artifact/
 
-      - name: Deploy to Dev
+      - name: Extract
+        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+
+      - name: Deploy to IIS (dev)
         run: |
-          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
-          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Dev"
-          echo "Replace this step with your actual deploy command (xcopy / robocopy / IIS appcmd)"
+          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+            -Environment dev `
+            -ArtifactPath "${{ github.workspace }}\artifact\publish" `
+            -Version "${{ needs.build-and-release.outputs.version }}"
 
   deploy-test:
     name: deploy → test
     needs: build-and-release
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, iis]
     environment: test
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-and-release.outputs.artifact-name }}
+          path: artifact/
 
-      - name: Deploy to Test
+      - name: Extract
+        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+
+      - name: Deploy to IIS (test)
         run: |
-          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
-          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Test"
-          echo "Replace this step with your actual deploy command"
+          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+            -Environment test `
+            -ArtifactPath "${{ github.workspace }}\artifact\publish" `
+            -Version "${{ needs.build-and-release.outputs.version }}"
 
   deploy-stage:
     name: deploy → stage
     needs: [build-and-release, deploy-dev, deploy-test]
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, iis]
     environment: stage
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-and-release.outputs.artifact-name }}
+          path: artifact/
 
-      - name: Deploy to Stage
+      - name: Extract
+        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+
+      - name: Deploy to IIS (stage)
         run: |
-          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
-          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Stage"
-          echo "Replace this step with your actual deploy command"
+          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+            -Environment stage `
+            -ArtifactPath "${{ github.workspace }}\artifact\publish" `
+            -Version "${{ needs.build-and-release.outputs.version }}"
 
   deploy-prod:
     name: deploy → prod
     needs: [build-and-release, deploy-stage]
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, iis]
     environment: prod
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ needs.build-and-release.outputs.artifact-name }}
+          path: artifact/
 
-      - name: Deploy to Prod
+      - name: Extract
+        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+
+      - name: Deploy to IIS (prod)
         run: |
-          Expand-Archive -Path *.zip -DestinationPath deploy/ -Force
-          echo "Deploying version ${{ needs.build-and-release.outputs.version }} to Prod (Live)"
-          echo "Replace this step with your actual deploy command"
+          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+            -Environment prod `
+            -ArtifactPath "${{ github.workspace }}\artifact\publish" `
+            -Version "${{ needs.build-and-release.outputs.version }}"

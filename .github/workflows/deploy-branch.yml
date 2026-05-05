@@ -14,7 +14,7 @@ on:
 jobs:
   build-and-deploy:
     name: build & deploy → ${{ inputs.environment }}
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows, iis]
     environment: ${{ inputs.environment }}
 
     steps:
@@ -28,7 +28,7 @@ jobs:
       - name: Set preview version
         id: version
         run: |
-          $branch = "${{ github.ref_name }}" -replace '/', '-'
+          $branch = "${{ github.ref_name }}" -replace '[/\\]', '-'
           $sha = "${{ github.sha }}".Substring(0, 7)
           $version = "1.0.${{ github.run_number }}-pr.$branch+$sha"
           echo "version=$version" >> $env:GITHUB_OUTPUT
@@ -49,7 +49,9 @@ jobs:
           path: publish/
           retention-days: 3
 
-      - name: Deploy to ${{ inputs.environment }}
+      - name: Deploy to IIS (${{ inputs.environment }})
         run: |
-          echo "Deploying branch '${{ github.ref_name }}' (${{ steps.version.outputs.version }}) to ${{ inputs.environment }}"
-          echo "Replace this step with your actual deploy command"
+          powershell -ExecutionPolicy Bypass -File TESTAPI/deploy/iis-deploy.ps1 `
+            -Environment "${{ inputs.environment }}" `
+            -ArtifactPath "${{ github.workspace }}\publish" `
+            -Version "${{ steps.version.outputs.version }}"
