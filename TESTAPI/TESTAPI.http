@@ -1,0 +1,6 @@
+@TESTAPI_HostAddress = http://localhost:5182
+
+GET {{TESTAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
