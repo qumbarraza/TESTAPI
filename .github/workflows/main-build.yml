@@ -97,7 +97,9 @@ jobs:
           path: artifact/
 
       - name: Extract
-        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+        run: |
+          $zip = Get-ChildItem -Path artifact -Filter *.zip | Select-Object -First 1 -ExpandProperty FullName
+          Expand-Archive -Path $zip -DestinationPath artifact/publish/ -Force
 
       - name: Deploy to IIS (dev)
         run: |
@@ -125,7 +127,9 @@ jobs:
           path: artifact/
 
       - name: Extract
-        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+        run: |
+          $zip = Get-ChildItem -Path artifact -Filter *.zip | Select-Object -First 1 -ExpandProperty FullName
+          Expand-Archive -Path $zip -DestinationPath artifact/publish/ -Force
 
       - name: Deploy to IIS (test)
         run: |
@@ -153,7 +157,9 @@ jobs:
           path: artifact/
 
       - name: Extract
-        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+        run: |
+          $zip = Get-ChildItem -Path artifact -Filter *.zip | Select-Object -First 1 -ExpandProperty FullName
+          Expand-Archive -Path $zip -DestinationPath artifact/publish/ -Force
 
       - name: Deploy to IIS (stage)
         run: |
@@ -181,7 +187,9 @@ jobs:
           path: artifact/
 
       - name: Extract
-        run: Expand-Archive -Path artifact/*.zip -DestinationPath artifact/publish/ -Force
+        run: |
+          $zip = Get-ChildItem -Path artifact -Filter *.zip | Select-Object -First 1 -ExpandProperty FullName
+          Expand-Archive -Path $zip -DestinationPath artifact/publish/ -Force
 
       - name: Deploy to IIS (prod)
         run: |
