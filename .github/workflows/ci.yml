@@ -25,6 +25,8 @@ jobs:
 
       - name: Restore
         run: dotnet restore TESTAPI/TESTAPI.csproj
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: dotnet build TESTAPI/TESTAPI.csproj -c Release --no-restore

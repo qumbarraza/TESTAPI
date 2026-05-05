@@ -12,9 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="TESTLIB">
-      <HintPath>..\..\TESTLIB\TESTLIB\bin\Debug\net10.0\TESTLIB.dll</HintPath>
-    </Reference>
+    <PackageReference Include="TESTLIB" Version="1.0.*" />
   </ItemGroup>
 
 </Project>
